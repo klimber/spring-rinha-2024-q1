@@ -21,6 +21,7 @@ public record PostTransacaoRequest(@NotNull TipoTransacao tipo,
                              this.tipo,
                              this.valor,
                              this.descricao,
-                             Instant.now());
+                             Instant.now(),
+                             null);
     }
 }

@@ -6,10 +6,8 @@ import com.klimber.springrinha2024q1.dtos.PostTransacaoResponse;
 import com.klimber.springrinha2024q1.exceptions.ClienteNotFoundException;
 import com.klimber.springrinha2024q1.exceptions.LimiteInsuficienteException;
 import com.klimber.springrinha2024q1.models.Cliente;
-import com.klimber.springrinha2024q1.models.Saldo;
 import com.klimber.springrinha2024q1.models.Transacao;
 import com.klimber.springrinha2024q1.services.ClienteService;
-import com.klimber.springrinha2024q1.services.SaldoService;
 import com.klimber.springrinha2024q1.services.TransacaoService;
 import jakarta.validation.Valid;
 import java.util.Collection;
@@ -28,12 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class RinhaResource {
     private final ClienteService clienteService;
-    private final SaldoService saldoService;
     private final TransacaoService transacaoService;
 
-    public RinhaResource(ClienteService clienteService, SaldoService saldoService, TransacaoService transacaoService) {
+    public RinhaResource(ClienteService clienteService, TransacaoService transacaoService) {
         this.clienteService = clienteService;
-        this.saldoService = saldoService;
         this.transacaoService = transacaoService;
     }
 
@@ -42,22 +38,18 @@ public class RinhaResource {
     public ResponseEntity<PostTransacaoResponse> postTransacao(@PathVariable("id") Long clienteId,
                                                                @RequestBody @Valid PostTransacaoRequest request) {
         Cliente cliente = this.clienteService.findById(clienteId);
-        Saldo saldoAtual = this.saldoService.findByClienteId(clienteId);
-
-        Transacao transacao = request.toTransacao(cliente.id());
-        Saldo novoSaldo = saldoAtual.atualizar(transacao, cliente);
-
-        this.transacaoService.save(transacao);
-        this.saldoService.save(novoSaldo);
-        return ResponseEntity.ok(new PostTransacaoResponse(cliente.limite(), novoSaldo.saldo()));
+        Transacao transacao = request.toTransacao(clienteId);
+        Transacao salva = this.transacaoService.save(cliente, transacao);
+        PostTransacaoResponse response = new PostTransacaoResponse(cliente.limite(), salva.saldo());
+        return ResponseEntity.ok(response);
     }
 
     @Transactional
     @GetMapping("/clientes/{id}/extrato")
     public ResponseEntity<GetExtratoResponse> getExtrato(@PathVariable("id") Long clienteId) {
         Cliente cliente = this.clienteService.findById(clienteId);
-        Saldo saldo = this.saldoService.findByClienteId(cliente.id());
         Collection<Transacao> ultimasTransacoes = this.transacaoService.ultimasTransacoes(cliente.id());
+        Long saldo = ultimasTransacoes.stream().map(Transacao::saldo).findFirst().orElse(0L);
         GetExtratoResponse response = GetExtratoResponse.from(cliente, saldo, ultimasTransacoes);
         return ResponseEntity.ok(response);
     }

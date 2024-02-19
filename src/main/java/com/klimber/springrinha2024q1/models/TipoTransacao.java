@@ -12,7 +12,7 @@ public enum TipoTransacao {
         this.operation = operation;
     }
 
-    public Long getValorForTipo(Long valor) {
+    public Long valorForTipo(Long valor) {
         return this.operation.apply(valor);
     }
 }

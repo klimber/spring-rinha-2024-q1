@@ -8,9 +8,10 @@ public record Transacao(@Id Long id,
                         TipoTransacao tipo,
                         Long valor,
                         String descricao,
-                        Instant realizadaEm) {
+                        Instant realizadaEm,
+                        Long saldo) {
 
-    public Long getValorForTipo() {
-        return this.tipo.getValorForTipo(this.valor);
+    public Long getDiferenca() {
+        return this.tipo.valorForTipo(this.valor);
     }
 }
